@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events — Roles &amp; Responsibilities</title>
+<style>
+  :root {
+    --onyx:     #1a1a1a;
+    --talc:     #f5f5f0;
+    --mist:     #d6d6d6;
+    --wave:     #1f6feb;
+    --flamingo: #f46d6d;
+    --turmeric: #f5a623;
+    --jade:     #4caf82;
+    --sapphire: #1b4f8a;
+    --amethyst: #7b5ea7;
+    --white:    #ffffff;
+    --border:   #ddddd8;
+    --text:     #1a1a1a;
+    --text-2:   #555555;
+    --text-3:   #888888;
+    --bg:       #f5f5f0;
+    --card:     #ffffff;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); padding: 24px; max-width: 1000px; }
+
+  .page-hdr { border-left: 5px solid var(--flamingo); padding-left: 14px; margin-bottom: 22px; }
+  .page-hdr h1 { font-family: var(--serif); font-size: 24px; font-weight: 700; color: var(--onyx); margin-bottom: 3px; }
+  .page-hdr p  { font-size: 12px; color: var(--text-2); }
+
+  .view-toggle { display: flex; gap: 6px; margin-bottom: 18px; }
+  .vtab { padding: 7px 16px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--talc); color: var(--text-2); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .12s; }
+  .vtab.active { background: var(--onyx); color: var(--white); border-color: var(--onyx); }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── ROLE VIEW ─────────────────────────────── */
+  .role-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 18px; }
+  .role-btn { padding: 10px 8px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--card); cursor: pointer; text-align: center; transition: all .12s; }
+  .role-btn:hover { border-color: var(--onyx); }
+  .role-btn.active { border-color: transparent; color: var(--white); }
+  .role-btn.active.turmeric { color: var(--onyx); }
+  .role-abbr { font-family: var(--serif); font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+  .role-name { font-size: 10px; line-height: 1.3; }
+
+  .role-detail { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .role-detail-hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .role-avatar { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 20px; font-weight: 700; flex-shrink: 0; }
+  .role-hdr-text h2 { font-family: var(--serif); font-size: 18px; font-weight: 700; color: var(--onyx); }
+  .role-hdr-text p  { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+  .raci-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .raci-sec { border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
+  .raci-sec-hdr { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+  .raci-letter { width: 28px; height: 28px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .raci-sec-title { font-size: 12px; font-weight: 700; }
+  .raci-sec-sub   { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+  .raci-items { padding: 0 14px 10px; }
+  .raci-item { padding: 7px 0; border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: flex-start; }
+  .raci-item:first-child { border-top: none; }
+  .evt-tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; margin-top: 1px; white-space: nowrap; }
+  .raci-item-bucket { font-size: 12px; color: var(--text); line-height: 1.4; }
+  .raci-empty { font-size: 12px; color: var(--text-3); padding: 8px 0; font-style: italic; }
+
+  /* ── PHASE VIEW ─────────────────────────────── */
+  .flow { display: flex; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 14px; background: var(--card); }
+  .phase-btn { flex: 1; padding: 10px 6px; text-align: center; cursor: pointer; border: none; background: var(--talc); border-right: 1px solid var(--border); position: relative; transition: background .12s; min-width: 0; }
+  .phase-btn:last-child { border-right: none; }
+  .phase-btn .pnum  { font-size: 10px; color: var(--text-3); margin-bottom: 2px; }
+  .phase-btn .pname { font-size: 11px; font-weight: 600; color: var(--text-2); line-height: 1.3; }
+  .phase-btn.active { background: var(--card); }
+  .phase-btn.active .pname { color: var(--onyx); }
+  .phase-btn.active::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--acc,#1a1a1a); }
+
+  .phase-detail { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+  .phase-detail-hdr { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+  .pdot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .phase-title { font-family: var(--serif); font-size:15px; font-weight:700; color:var(--onyx); }
+  .phase-sub   { font-size:11px; color:var(--text-2); margin-top:2px; }
+  .etabs { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .etab  { font-size:12px; font-weight:600; padding:4px 12px; border-radius:20px; cursor:pointer; border:1.5px solid var(--border); background:var(--talc); color:var(--text-2); transition:all .12s; }
+  .etab.active { color:#fff; border-color:transparent; }
+  .etab.active.yt { color:var(--onyx); }
+  .col-hdrs { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-bottom:8px; }
+  .col-hdr  { font-size:11px; font-weight:700; padding:4px 6px; border-radius:5px; text-align:center; }
+  .buckets  { display:flex; flex-direction:column; gap:0; }
+  .brow { margin-bottom:6px; }
+  .bname { font-size:12px; font-weight:600; color:var(--text-2); padding:5px 0 5px; border-top:1px solid var(--border); }
+  .braci { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:5px; }
+  .chip  { font-size:11px; font-weight:600; padding:4px 6px; border-radius:5px; text-align:center; word-break:break-word; line-height:1.3; }
+  .chip-empty { font-size:11px; color:var(--text-3); text-align:center; padding:4px 0; }
+  .no-buckets { font-size:12px; color:var(--text-3); padding:8px 0; font-style:italic; }
+
+  /* ── GLOSSARY ────────────────────────────────── */
+  .gloss-wrap { background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-top:18px; }
+  .gloss-toggle { width:100%; display:flex; align-items:center; justify-content:space-between; padding:12px 18px; background:var(--talc); border:none; cursor:pointer; font-family:var(--font); font-size:13px; font-weight:700; color:var(--onyx); }
+  .gloss-toggle:hover { background:var(--mist); }
+  .garrow { font-size:11px; color:var(--text-3); transition:transform .2s; display:inline-block; }
+  .garrow.open { transform:rotate(180deg); }
+  .gloss-body { display:none; padding:16px 20px; }
+  .gloss-body.open { display:block; }
+  .raci-key { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--border); }
+  .rk-item { display:flex; align-items:flex-start; gap:10px; min-width:180px; }
+  .rk-badge { width:28px; height:28px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+  .rk-text strong { display:block; font-size:12px; color:var(--onyx); margin-bottom:1px; }
+  .rk-text span   { font-size:11px; color:var(--text-2); }
+  .gloss-label { font-size:10px; font-weight:700; color:var(--text-3); letter-spacing:.08em; margin-bottom:10px; }
+  .gloss-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:0 24px; }
+  .grow { display:flex; align-items:baseline; gap:10px; padding:5px 0; border-bottom:1px solid var(--border); }
+  .gabbr { font-size:12px; font-weight:700; color:var(--onyx); min-width:72px; flex-shrink:0; }
+  .gfull { font-size:12px; color:var(--text-2); }
+</style>
+</head>
+<body>
+
+<div class="page-hdr">
+  <h1>Events — roles &amp; responsibilities</h1>
+  <p>Master reference &nbsp;·&nbsp; 4 event types &nbsp;·&nbsp; Select your team or browse by phase</p>
+</div>
+
+<div class="view-toggle">
+  <button class="vtab active" onclick="switchView('role')">My responsibilities</button>
+  <button class="vtab" onclick="switchView('phase')">Browse by phase</button>
+</div>
+
+<div class="view active" id="view-role">
+  <div class="role-grid" id="role-grid"></div>
+  <div class="role-detail" id="role-detail"></div>
+</div>
+
+<div class="view" id="view-phase">
+  <div class="flow" id="flow"></div>
+  <div class="phase-detail" id="phase-detail"></div>
+</div>
+
+<div class="gloss-wrap">
+  <button class="gloss-toggle" onclick="toggleGloss()">
+    <span>Key &amp; glossary</span>
+    <span class="garrow" id="garrow">▼</span>
+  </button>
+  <div class="gloss-body" id="gloss-body">
+    <div class="raci-key">
+      <div class="rk-item"><div class="rk-badge" style="background:#1b4f8a;color:#fff">R</div><div class="rk-text"><strong>Responsible</strong><span>Executes the work. Every bucket needs at least one R.</span></div></div>
+      <div class="rk-item"><div class="rk-badge" style="background:#4caf82;color:#fff">A</div><div class="rk-text"><strong>Accountable</strong><span>Owns the outcome. Final sign-off. Only one A per bucket.</span></div></div>
+      <div class="rk-item"><div class="rk-badge" style="background:#f5a623;color:#1a1a1a">C</div><div class="rk-text"><strong>Consulted</strong><span>Input required before decisions are made.</span></div></div>
+      <div class="rk-item"><div class="rk-badge" style="background:#d6d6d6;color:#1a1a1a">I</div><div class="rk-text"><strong>Informed</strong><span>Kept up to date. No action required.</span></div></div>
+    </div>
+    <div class="gloss-label">TEAM ABBREVIATIONS</div>
+    <div class="gloss-grid" id="gloss-grid"></div>
+  </div>
+</div>
+
+<script>
+var GLOSSARY=[["FM","Field Marketing"],["IMD","Vertical IMD (Industry Market Development)"],["EP","Executive Programming"],["EM","Events Marketing"],["ECO","Ecosystem team"],["MLT","Marketing Leadership Team"],["PM","Partnerships Marketing"],["CI","Campaign Infrastructure"],["CS","Campaign Strategy"],["CPs/BDMs","Client Principals / Business Development Managers"],["Design","Design team"],["SME","Subject Matter Experts"],["SA","Solution Architects"],["HOM","Head of Marketing"],["EXEC","Executive / C-suite"],["SPARK","SPARK team"],["VM","Vertical Marketing"],["CON","Content team"],["ADS","Paid Ads team"],["PR","Public Relations"],["MLM","Marketing Leadership & Comms"],["CA","Content & Activation"],["MM","Multimedia"],["SLM","Senior Leadership Marketing"],["NB","New Business"],["PS","Partner Sales"],["BIMDS","Business IMD Stakeholders"],["IND","Industry team"],["Events","Events logistics team"],["TD","Technical Directors"],["ALL","All stakeholders"]];
+
+var gg=document.getElementById('gloss-grid');
+GLOSSARY.forEach(function(g){var r=document.createElement('div');r.className='grow';r.innerHTML='<span class="gabbr">'+g[0]+'</span><span class="gfull">'+g[1]+'</span>';gg.appendChild(r);});
+function toggleGloss(){var b=document.getElementById('gloss-body'),a=document.getElementById('garrow');var o=b.classList.toggle('open');a.classList.toggle('open',o);}
+
+var ROLES=[
+  {abbr:"FM",   name:"Field Marketing",               color:"#b45309", textColor:"#fff"},
+  {abbr:"IMD",  name:"Vertical IMD",                  color:"#0f766e", textColor:"#fff"},
+  {abbr:"EP",   name:"Executive Programming",         color:"#0f766e", textColor:"#fff"},
+  {abbr:"EM",   name:"Events Marketing",              color:"#1f6feb", textColor:"#fff"},
+  {abbr:"CPs/BDMs",name:"Client Principals / BDMs",   color:"#7b5ea7", textColor:"#fff"},
+  {abbr:"Design",name:"Design",                       color:"#7b5ea7", textColor:"#fff"},
+  {abbr:"PM",   name:"Partnerships Marketing",             color:"#b45309", textColor:"#fff"},
+  {abbr:"SME",  name:"Subject Matter Experts",        color:"#1b4f8a", textColor:"#fff"},
+  {abbr:"ECO",  name:"Ecosystem",                     color:"#4caf82", textColor:"#1a1a1a"},
+  {abbr:"CI",   name:"Campaign Infrastructure",       color:"#1b4f8a", textColor:"#fff"},
+  {abbr:"PR",   name:"Public Relations",              color:"#f46d6d", textColor:"#fff"},
+  {abbr:"EXEC", name:"Executive / C-suite",           color:"#1a1a1a", textColor:"#fff"},
+];
+
+var EV_COLORS={"Tier 1":"#1f6feb","Sponsorships":"#7b5ea7","Tech Leaders":"#4caf82","Industry":"#f5a623"};
+var EV_TEXT={"Tier 1":"#fff","Sponsorships":"#fff","Tech Leaders":"#1a1a1a","Industry":"#1a1a1a"};
+
+var ALL_BUCKETS=[
+  {evt:"Tier 1",     bucket:"Event ideation + approval",              R:["EM"],                    A:["EM","PM","ECO"],              C:["MLT","ECO","SPARK","SALES"],     I:["FM","CPs/BDMs"]},
+  {evt:"Tier 1",     bucket:"Event positioning + messaging",          R:["Content"],               A:["EM","PM","ECO"],              C:["MLT","ECO","SPARK","SALES"],     I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Budget management + admin",              R:["EM"],                    A:["EM"],                         C:["MLT","ECO"],                     I:["MLT","ECO"]},
+  {evt:"Tier 1",     bucket:"Sponsorship + exhibit booth",            R:["EM"],                    A:["EM"],                         C:["MLT","ECO"],                     I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Campaign setup",                         R:["CI","CS"],               A:["EM","CS"],                    C:[],                                I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Landing page + registration",            R:["CS"],                    A:["CS"],                         C:["EM","CON","PM","DES"],           I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Creative, design + print",               R:["CS","DES"],              A:["CS","EM"],                    C:["PM","ECO","MLT"],                I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Demos",                                  R:["SME","SA"],              A:["ECO"],                        C:["VM","SPARK"],                    I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Content + speaking opps",                R:["PM"],                    A:["PM"],                         C:["FM","SALES","ECO","SPARK"],      I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Sales enablement",                       R:["EM"],                    A:["EM"],                         C:["ECO","SALES","SPARK"],           I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Promotions (social, PR, paid)",          R:["PR","CS"],               A:["EM","CS"],                    C:["CON","ECO","ADS"],               I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Comms (in + ex)",                        R:["MLM","PM","CS"],         A:["EM","CS"],                    C:["PM","CS","ECO"],                 I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Ancillary events",                       R:["EM","FM","PM","EP"],     A:["EM","PM","CS"],               C:["ECO","SALES","MLT","SPARK"],     I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Content capture",                        R:["CA","MM"],               A:["PR"],                         C:["PM","VM","EM","SLM","ECO"],      I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Partnerships",                           R:["PM"],                    A:["PM","ECO"],                   C:["SPARK","ECO"],                   I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Meeting management (EBCs)",              R:["SALES","SPARK","ECO"],   A:["ECO","BIMDS"],                C:["EM","PM"],                       I:["ALL"]},
+  {evt:"Tier 1",     bucket:"TW attendee management",                 R:["EM"],                    A:["SPARK","ECO","EXEC","SALES","MLT"], C:["CPs/BDMs","IMD"],          I:["ALL"]},
+  {evt:"Tier 1",     bucket:"On-site execution",                      R:["EM","PM","PR","MM"],     A:["EM"],                         C:[],                                I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Follow-up",                              R:["CPs/BDMs"],              A:["IMD","NB","PS"],              C:["EM","PM","ECO","SPARK"],         I:["SPARK","ECO","SALES"]},
+  {evt:"Tier 1",     bucket:"Post-event report",                      R:["EM","PM","CS"],          A:["EM","PM"],                    C:["SALES","ECO","Social","Paid"],   I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Booth staffing",                         R:["ECO","EM","BDMs"],       A:["EM"],                         C:["SPARK","ECO","SALES"],           I:["ALL"]},
+  {evt:"Tier 1",     bucket:"Awards",                                 R:["PM","ECO","FM","SALES"], A:["PM"],                         C:["Sales","ECO"],                   I:["ALL"]},
+
+  {evt:"Sponsorships",bucket:"Event ideation + approval",             R:["FM"],                    A:["FM","IMD"],                   C:["IMD","HOM","SME"],               I:["EXEC","IMD","CP","BDM"]},
+  {evt:"Sponsorships",bucket:"Event positioning + messaging",         R:["FM"],                    A:["FM","IMD"],                   C:["VM","CON","HOM","Events"],       I:["ALL"]},
+  {evt:"Sponsorships",bucket:"Sponsorship + exhibit booth",           R:["FM"],                    A:["FM"],                         C:["Events"],                        I:["HOM","IMD","SALES","EXEC"]},
+  {evt:"Sponsorships",bucket:"Campaign setup",                        R:["CI"],                    A:["FM"],                         C:[],                                I:["IND","CP/BDM"]},
+  {evt:"Sponsorships",bucket:"Landing page + registration",           R:["FM"],                    A:["FM"],                         C:["Events","IMD","SME"],            I:["ALL"]},
+  {evt:"Sponsorships",bucket:"Creative, design + printing",           R:["Design"],                A:["FM"],                         C:["Events"],                        I:["ALL"]},
+  {evt:"Sponsorships",bucket:"Sales enablement",                      R:["FM"],                    A:["FM","IMD"],                   C:["IMD","CP","BDM"],                I:["EXEC","HOM"]},
+  {evt:"Sponsorships",bucket:"Comms (in + ex)",                       R:["FM","IMD/CP/BDM"],       A:["FM","IMD"],                   C:["CON","IMD","CP","BDM"],          I:["ALL"]},
+  {evt:"Sponsorships",bucket:"Meeting management",                    R:["IMD","CP","BDM"],        A:["IMD"],                        C:["FM"],                            I:["ALL"]},
+  {evt:"Sponsorships",bucket:"Content + demos",                       R:["SME","SA","SPARK"],      A:["IMD"],                        C:["FM","VM"],                       I:["VM","ECO"]},
+  {evt:"Sponsorships",bucket:"Promotions",                            R:["PR"],                    A:["FM"],                         C:["IMD","Events"],                  I:["ALL"]},
+  {evt:"Sponsorships",bucket:"Ancillary events",                      R:["FM","PM"],               A:["FM","IMD"],                   C:["Events","ECO","HOM","IMD"],      I:["ALL"]},
+  {evt:"Sponsorships",bucket:"On-site execution",                     R:["FM"],                    A:["FM"],                         C:["Events"],                        I:[]},
+  {evt:"Sponsorships",bucket:"Follow-up",                             R:["CPs/BDMs"],              A:["IMD"],                        C:["FM"],                            I:["EXEC","HOM","ECO"]},
+  {evt:"Sponsorships",bucket:"Partnerships",                          R:["PM"],                    A:["FM"],                         C:["HOM","ECO"],                     I:["EXEC","ALL"]},
+  {evt:"Sponsorships",bucket:"Post-event report",                     R:["FM"],                    A:["FM"],                         C:["IMD","CP","BDM"],                I:["ALL"]},
+
+  {evt:"Tech Leaders",bucket:"Event ideation + approval",             R:["EP"],                    A:["EP"],                         C:["HOM","IMD","EXEC","FM"],         I:["EXEC","CP/BDM","ECO","VM"]},
+  {evt:"Tech Leaders",bucket:"Venue + event planning",                R:["EP"],                    A:["EP"],                         C:["FM","HOM","IMD"],                I:["ALL"]},
+  {evt:"Tech Leaders",bucket:"Campaign setup",                        R:["CI"],                    A:["EP"],                         C:[],                                I:["ALL"]},
+  {evt:"Tech Leaders",bucket:"Event LP + registration",               R:["EP"],                    A:["EP"],                         C:["Events","IMD","SME"],            I:["ALL"]},
+  {evt:"Tech Leaders",bucket:"Content + speakers",                    R:["SME","IMD"],             A:["EP"],                         C:["VM","FM"],                       I:["ALL"]},
+  {evt:"Tech Leaders",bucket:"Sales enablement",                      R:["EP"],                    A:["EP","IMD"],                   C:["FM","IMD"],                      I:["ALL"]},
+  {evt:"Tech Leaders",bucket:"Comms (in + ext)",                      R:["EP","FM"],               A:["EP"],                         C:["VM","FM"],                       I:["ALL"]},
+  {evt:"Tech Leaders",bucket:"Partnerships",                          R:["PM"],                    A:["PM"],                         C:["HOM","IMD","ECO"],               I:["ALL"]},
+  {evt:"Tech Leaders",bucket:"Creative, design + printing",           R:["Design"],                A:["EP"],                         C:["ECO","PM"],                      I:["ALL"]},
+  {evt:"Tech Leaders",bucket:"On-site execution",                     R:["EP","FM"],               A:["EP"],                         C:[],                                I:[]},
+  {evt:"Tech Leaders",bucket:"PE follow-up",                          R:["CP","BDM"],              A:["IMD"],                        C:["EP"],                            I:["EXEC","HOM"]},
+  {evt:"Tech Leaders",bucket:"PE reporting",                          R:["EP"],                    A:["EP"],                         C:["IMD/CP/BDM"],                    I:["ALL"]},
+
+  {evt:"Industry",   bucket:"Event ideation + approval",              R:["FM"],                    A:["FM","IMD"],                   C:["IND","HOM","SME"],               I:["EXEC","IMD","CP","BDM"]},
+  {evt:"Industry",   bucket:"Venue + event planning",                 R:["FM"],                    A:["FM"],                         C:["IMD","HOM","Events"],            I:[]},
+  {evt:"Industry",   bucket:"Campaign setup",                         R:["CI"],                    A:["FM"],                         C:[],                                I:["IMD","CP/BDM"]},
+  {evt:"Industry",   bucket:"Event LP + registration",                R:["FM"],                    A:["FM"],                         C:["Events","IMD/SME"],              I:["IMD","CP/BDM","HOM"]},
+  {evt:"Industry",   bucket:"Sales enablement",                       R:["FM"],                    A:["FM","IMD"],                   C:["IMD","CP/BDM"],                  I:["EXEC","HOM"]},
+  {evt:"Industry",   bucket:"Internal comms",                         R:["FM"],                    A:["FM"],                         C:[],                                I:["EXEC","IMD","BDM","HOM"]},
+  {evt:"Industry",   bucket:"External comms",                         R:["FM","IMDS/CP/BDM"],      A:["IMD"],                        C:["IMD","CP/BDM/SME"],              I:[]},
+  {evt:"Industry",   bucket:"Creative, design + printing",            R:["Design"],                A:["FM"],                         C:[],                                I:["EXEC","IND","BDM","Events"]},
+  {evt:"Industry",   bucket:"On-site execution",                      R:["FM","CPs/BDMs"],         A:["FM"],                         C:["Events"],                        I:[]},
+  {evt:"Industry",   bucket:"Post-event reporting",                   R:["FM"],                    A:["FM"],                         C:["Events"],                        I:[]},
+  {evt:"Industry",   bucket:"Follow-up + pipeline conversion",        R:["CPs/BDMs"],              A:["IMD"],                        C:["IMD/CP/BDM"],                    I:["ALL"]},
+  {evt:"Industry",   bucket:"Partnerships",                           R:["PM"],                    A:["FM"],                         C:["FM"],                            I:["EXEC","HOM"]},
+  {evt:"Industry",   bucket:"Content",                                R:["SME","IMD"],             A:["FM"],                         C:["SME","ECO","SPARK","VM"],        I:["EXEC","HOM","SALES"]},
+];
+
+function matches(abbr, list) {
+  return list.some(function(t){ return t.toUpperCase()===abbr.toUpperCase() || t.toUpperCase().indexOf(abbr.toUpperCase())>=0; });
+}
+
+function getRoleData(abbr) {
+  var R=[],A=[],C=[],I=[];
+  ALL_BUCKETS.forEach(function(b){
+    if(matches(abbr,b.R)) R.push({evt:b.evt,bucket:b.bucket});
+    if(matches(abbr,b.A)) A.push({evt:b.evt,bucket:b.bucket});
+    if(matches(abbr,b.C)) C.push({evt:b.evt,bucket:b.bucket});
+    if(matches(abbr,b.I)) I.push({evt:b.evt,bucket:b.bucket});
+  });
+  return {R:R,A:A,C:C,I:I};
+}
+
+function evtTag(evt) {
+  return '<span class="evt-tag" style="background:'+EV_COLORS[evt]+';color:'+EV_TEXT[evt]+'">'+evt+'</span>';
+}
+
+function renderRaciSec(letter, bgColor, textColor, title, sub, items) {
+  var itemsHtml = items.length===0
+    ? '<p class="raci-empty">No assignments in this role</p>'
+    : items.map(function(i){ return '<div class="raci-item">'+evtTag(i.evt)+'<span class="raci-item-bucket">'+i.bucket+'</span></div>'; }).join('');
+  return '<div class="raci-sec">'
+    +'<div class="raci-sec-hdr" style="background:'+bgColor+'22">'
+    +'<div class="raci-letter" style="background:'+bgColor+';color:'+textColor+'">'+letter+'</div>'
+    +'<div><div class="raci-sec-title" style="color:'+bgColor+'">'+title+'</div><div class="raci-sec-sub">'+sub+'</div></div>'
+    +'</div>'
+    +'<div class="raci-items">'+itemsHtml+'</div>'
+    +'</div>';
+}
+
+var activeRole=0;
+
+function renderRoleGrid() {
+  var g=document.getElementById('role-grid');
+  g.innerHTML=ROLES.map(function(r,i){
+    var isActive=i===activeRole;
+    var isYellow=r.color==='#f5a623';
+    return '<button class="role-btn'+(isActive?' active'+(isYellow?' turmeric':''):'')+'" '
+      +(isActive?'style="background:'+r.color+';border-color:'+r.color+'"':'')
+      +' onclick="setRole('+i+')">'
+      +'<div class="role-abbr" style="'+(isActive?'color:'+(isYellow?'#1a1a1a':'#fff'):'color:'+r.color)+'">'+r.abbr+'</div>'
+      +'<div class="role-name" style="color:'+(isActive?(isYellow?'#33220088':'rgba(255,255,255,0.8)'):'var(--text-3)')+'">'+r.name+'</div>'
+      +'</button>';
+  }).join('');
+}
+
+function renderRoleDetail() {
+  var role=ROLES[activeRole];
+  var d=getRoleData(role.abbr);
+  var full=GLOSSARY.find(function(g){return g[0]===role.abbr;})||[role.abbr,role.name];
+  document.getElementById('role-detail').innerHTML=
+    '<div class="role-detail-hdr">'
+    +'<div class="role-avatar" style="background:'+role.color+';color:'+role.textColor+'">'+role.abbr.slice(0,2)+'</div>'
+    +'<div class="role-hdr-text"><h2>'+role.abbr+' — '+full[1]+'</h2>'
+    +'<p>Showing all responsibilities across all 4 event types</p></div>'
+    +'</div>'
+    +'<div class="raci-sections">'
+    +renderRaciSec('R','#1b4f8a','#fff','Responsible','You execute the work',d.R)
+    +renderRaciSec('A','#4caf82','#fff','Accountable','You own the outcome',d.A)
+    +renderRaciSec('C','#f5a623','#1a1a1a','Consulted','Input before decisions',d.C)
+    +renderRaciSec('I','#888888','#fff','Informed','Kept in the loop',d.I)
+    +'</div>';
+}
+
+function setRole(i){activeRole=i;renderRoleGrid();renderRoleDetail();}
+
+var EVENTS2=[
+  {name:"Tier 1 — Global events",    short:"Tier 1 Global",   color:"#1f6feb",textColor:"#fff", owner:"EM",  sub:"Partnership sponsorships · EM leads all execution"},
+  {name:"Field events — sponsorships",short:"Sponsorships",   color:"#7b5ea7",textColor:"#fff", owner:"FM",  sub:"Owned field events with sponsors · FM leads and owns"},
+  {name:"Tech Leaders Network",       short:"Tech Leaders",   color:"#4caf82",textColor:"#1a1a1a",owner:"EP",sub:"Exec programming, industry specific · EP is primary owner"},
+  {name:"Industry field events",      short:"Industry Events",color:"#f5a623",textColor:"#1a1a1a",owner:"FM",sub:"Non-executive programming · FM accountable for 12 of 13 buckets"},
+];
+
+var PHASES2=[
+  {name:"Ideation & approval",    sub:"Concept, positioning, budget"},
+  {name:"Campaign & planning",    sub:"LP, registration, campaign setup"},
+  {name:"Creative & content",     sub:"Design, copy, demos, speakers"},
+  {name:"Comms & enablement",     sub:"Internal, external, sales tools"},
+  {name:"On-site execution",      sub:"Logistics, on-site management"},
+  {name:"Follow-up & reporting",  sub:"Pipeline, post-event, reporting"},
+];
+
+var EVT_DATA={
+  "Tier 1 Global":{
+    0:[{b:"Event ideation + approval",R:"EM",A:"EM, PM, ECO",C:"MLT, ECO, SPARK, SALES",I:"FM, CPs/BDMs"},{b:"Event positioning + messaging",R:"Content",A:"EM, PM, ECO",C:"MLT, ECO, SPARK, SALES",I:"ALL"},{b:"Budget management + admin",R:"EM",A:"EM",C:"MLT, ECO",I:"MLT, ECO"},{b:"Sponsorship + exhibit booth",R:"EM",A:"EM",C:"MLT, ECO",I:"ALL"}],
+    1:[{b:"Campaign setup",R:"CI, CS",A:"EM, CS",C:"—",I:"ALL"},{b:"Landing page + registration",R:"CS",A:"CS",C:"EM, CON, PM, DES",I:"ALL"},{b:"Meeting management (EBCs)",R:"SALES, SPARK, ECO",A:"ECO, BIMDS",C:"EM, PM",I:"ALL"},{b:"TW attendee management",R:"EM",A:"SPARK, ECO, EXEC, SALES, MLT",C:"CPs/BDMs, IMD",I:"ALL"}],
+    2:[{b:"Creative, design + print",R:"CS, DES",A:"CS, EM",C:"PM, ECO, MLT",I:"ALL"},{b:"Demos",R:"SME, SA",A:"ECO",C:"VM, SPARK",I:"ALL"},{b:"Content + speaking opps",R:"PM",A:"PM",C:"FM, SALES, ECO, SPARK",I:"ALL"},{b:"Content capture",R:"CA, MM",A:"PR",C:"PM, VM, EM, SLM, ECO",I:"ALL"}],
+    3:[{b:"Sales enablement",R:"EM",A:"EM",C:"ECO, SALES, SPARK",I:"ALL"},{b:"Promotions (social, PR, paid)",R:"PR, CS",A:"EM, CS",C:"CON, ECO, ADS",I:"ALL"},{b:"Comms (in + ex)",R:"MLM, PM, CS",A:"EM, CS",C:"PM, CS, ECO",I:"ALL"}],
+    4:[{b:"On-site execution",R:"EM, PM, PR, MM",A:"EM",C:"—",I:"ALL"},{b:"Booth staffing",R:"ECO, EM, BDMs",A:"EM",C:"SPARK, ECO, SALES",I:"ALL"},{b:"Ancillary events",R:"EM, FM, PM, EP",A:"EM, PM, CS",C:"ECO, SALES, MLT, SPARK",I:"ALL"}],
+    5:[{b:"Follow-up",R:"CPs, BDMs",A:"IMD, NB, PS",C:"EM, PM, ECO, SPARK",I:"SPARK, ECO, SALES"},{b:"Post-event report",R:"EM, PM, CS",A:"EM, PM",C:"SALES, ECO, Social, Paid",I:"ALL"},{b:"Awards",R:"PM, ECO, FM, SALES",A:"PM",C:"Sales + ECO",I:"ALL"}]
+  },
+  "Sponsorships":{
+    0:[{b:"Event ideation + approval",R:"FM",A:"FM, IMD",C:"IMD, HOM, SME",I:"EXEC, IMD, CP, BDM"},{b:"Event positioning + messaging",R:"FM",A:"FM, IMD",C:"VM, CON, HOM, Events",I:"ALL"},{b:"Sponsorship + exhibit booth",R:"FM",A:"FM",C:"Events",I:"HOM, IMD, SALES, EXEC"}],
+    1:[{b:"Campaign setup",R:"CI",A:"FM",C:"—",I:"IND, CP/BDM"},{b:"Landing page + registration",R:"FM",A:"FM",C:"Events, IMD, SME",I:"ALL"},{b:"Meeting management",R:"IMD, CP, BDM",A:"IMD",C:"FM",I:"ALL"}],
+    2:[{b:"Creative, design + printing",R:"Design",A:"FM",C:"Events",I:"ALL"},{b:"Content + demos",R:"SME, SA, SPARK",A:"IMD",C:"FM, VM",I:"VM, ECO"}],
+    3:[{b:"Sales enablement",R:"FM",A:"FM, IMD",C:"IMD, CP, BDM",I:"EXEC, HOM"},{b:"Comms (in + ex)",R:"FM, IMD/CP/BDM",A:"FM, IMD",C:"CON, IMD, CP, BDM",I:"ALL"},{b:"Promotions",R:"PR",A:"FM",C:"IMD, Events",I:"ALL"}],
+    4:[{b:"On-site execution",R:"FM (Events)",A:"FM",C:"Events",I:"—"},{b:"Ancillary events",R:"FM, PM",A:"FM, IMD",C:"Events, ECO, HOM, IMD",I:"ALL"}],
+    5:[{b:"Follow-up",R:"CPs, BDM",A:"IMD",C:"FM",I:"EXEC, HOM, ECO"},{b:"Partnerships",R:"PM",A:"FM",C:"HOM, ECO",I:"EXEC, ALL"},{b:"Post-event report",R:"FM",A:"FM",C:"IMD, CP, BDM",I:"ALL"}]
+  },
+  "Tech Leaders":{
+    0:[{b:"Event ideation + approval",R:"EP",A:"EP",C:"HOM, IMD, EXEC, FM",I:"EXEC, CP/BDM, ECO, VM"},{b:"Venue + event planning",R:"EP",A:"EP",C:"FM, HOM, IMD",I:"ALL"}],
+    1:[{b:"Campaign setup",R:"CI",A:"EP",C:"—",I:"ALL"},{b:"Event LP + registration",R:"EP",A:"EP",C:"Events, IMD, SME",I:"ALL"}],
+    2:[{b:"Creative, design + printing",R:"Design",A:"EP",C:"ECO, PM",I:"ALL"},{b:"Content + speakers",R:"SME, IMD",A:"EP",C:"VM, FM",I:"ALL"}],
+    3:[{b:"Sales enablement",R:"EP",A:"EP, IMD",C:"FM, IMD",I:"ALL"},{b:"Comms (in + ext)",R:"EP, FM",A:"EP",C:"VM, FM",I:"ALL"}],
+    4:[{b:"On-site execution",R:"EP or FM",A:"EP",C:"—",I:"—"}],
+    5:[{b:"PE follow-up",R:"CP, BDM",A:"IMD",C:"EP",I:"EXEC, HOM"},{b:"PE reporting",R:"EP",A:"EP",C:"IMD/CP/BDM",I:"ALL"}]
+  },
+  "Industry Events":{
+    0:[{b:"Event ideation + approval",R:"FM",A:"FM, IMD",C:"IND, HOM, SME",I:"EXEC, IMD, CP, BDM"},{b:"Venue + event planning",R:"FM",A:"FM",C:"IMD, HOM, Events",I:"—"}],
+    1:[{b:"Campaign setup",R:"CI",A:"FM",C:"—",I:"IMD, CP/BDM"},{b:"Event LP + registration",R:"FM",A:"FM",C:"Events, IMD/SME",I:"IMD, CP/BDM, HOM"}],
+    2:[{b:"Creative, design + printing",R:"Design",A:"FM",C:"—",I:"EXEC, IND, BDM, Events"},{b:"Content",R:"SME, IMD",A:"FM",C:"SME, Eco, SPARK, VM",I:"EXEC, HOM, SALES, All"}],
+    3:[{b:"Sales enablement",R:"FM",A:"FM / IMD",C:"IMD, CP/BDM",I:"EXEC, HOM"},{b:"Internal comms",R:"FM",A:"FM",C:"—",I:"EXEC, IMD, BDM, HOM"},{b:"External comms",R:"FM, IMDS/CP/BDM",A:"IMD",C:"IMD, CP/BDM/SME",I:"—"}],
+    4:[{b:"On-site execution",R:"FM, CPs/BDMs",A:"FM",C:"Events",I:"—"}],
+    5:[{b:"Follow-up + pipeline conversion",R:"CPs/BDMs",A:"IMD",C:"IMD/CP/BDM",I:"ALL"},{b:"Partnerships",R:"PM",A:"FM",C:"FM",I:"EXEC, HOM"},{b:"Post-event reporting",R:"FM",A:"FM",C:"Events",I:"—"}]
+  }
+};
+
+var activeEvt2=0, activePhase2=0;
+
+function chip2(v,t){
+  if(!v||v==='—')return '<span class="chip-empty">—</span>';
+  var s={R:"background:#1b4f8a;color:#fff",A:"background:#4caf82;color:#fff",C:"background:#f5a623;color:#1a1a1a",I:"background:#d6d6d6;color:#1a1a1a"};
+  return '<span class="chip" style="'+s[t]+'">'+v+'</span>';
+}
+
+function renderFlow(){
+  var ev=EVENTS2[activeEvt2];
+  // Event selector — now the primary nav
+  document.getElementById('flow').innerHTML=EVENTS2.map(function(e,i){
+    var a=i===activeEvt2;
+    var isLight=e.color==='#f5a623'||e.color==='#4caf82';
+    return '<button class="phase-btn'+(a?' active':'')+'" style="--acc:'+e.color+'" onclick="setEvt2('+i+')">'
+      +'<div class="pnum" style="'+(a?'color:'+(isLight?'rgba(0,0,0,0.5)':'rgba(255,255,255,0.6)'):'')+'">'+e.owner+' leads</div>'
+      +'<div class="pname">'+e.short+'</div>'
+      +'</button>';
+  }).join('');
+}
+
+function renderPhaseDetail(){
+  var ev=EVENTS2[activeEvt2];
+  var ph=PHASES2[activePhase2];
+  var rows=(EVT_DATA[ev.short]&&EVT_DATA[ev.short][activePhase2])||[];
+
+  // Phase sub-tabs
+  var phaseTabs=PHASES2.map(function(p,i){
+    var a=i===activePhase2;
+    return '<button class="etab'+(a?' active'+(ev.color==='#f5a623'?' yt':''):'')+'" '
+      +(a?'style="background:'+ev.color+';border-color:'+ev.color+'"':'')
+      +' onclick="setPhase2('+i+')">'+(i+1)+'. '+p.name+'</button>';
+  }).join('');
+
+  var hdrs='<div class="col-hdrs">'
+    +'<div class="col-hdr" style="background:#1b4f8a;color:#fff">R — Responsible</div>'
+    +'<div class="col-hdr" style="background:#4caf82;color:#fff">A — Accountable</div>'
+    +'<div class="col-hdr" style="background:#f5a623;color:#1a1a1a">C — Consulted</div>'
+    +'<div class="col-hdr" style="background:#d6d6d6;color:#1a1a1a">I — Informed</div>'
+    +'</div>';
+
+  var buckets=rows.length===0
+    ?'<p class="no-buckets">No specific buckets in this phase for this event type.</p>'
+    :rows.map(function(r){return '<div class="brow"><div class="bname">'+r.b+'</div><div class="braci">'+chip2(r.R,'R')+chip2(r.A,'A')+chip2(r.C,'C')+chip2(r.I,'I')+'</div></div>';}).join('');
+
+  document.getElementById('phase-detail').innerHTML=
+    '<div class="phase-detail-hdr">'
+    +'<div class="pdot" style="background:'+ev.color+'"></div>'
+    +'<div>'
+    +'<div class="phase-title">'+ev.name+'</div>'
+    +'<div class="phase-sub">'+ev.sub+'</div>'
+    +'</div></div>'
+    +'<div class="etabs" style="margin-bottom:14px">'+phaseTabs+'</div>'
+    +'<div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px">Phase '+(activePhase2+1)+' — '+ph.name+' <span style="font-weight:400;color:var(--text-3)">· '+ph.sub+'</span></div>'
+    +hdrs
+    +'<div class="buckets">'+buckets+'</div>';
+}
+
+function setEvt2(i){activeEvt2=i;renderFlow();renderPhaseDetail();}
+function setPhase2(i){activePhase2=i;renderPhaseDetail();}
+
+function switchView(v){
+  document.getElementById('view-role').classList.toggle('active',v==='role');
+  document.getElementById('view-phase').classList.toggle('active',v==='phase');
+  document.querySelectorAll('.vtab').forEach(function(t,i){t.classList.toggle('active',(i===0&&v==='role')||(i===1&&v==='phase'));});
+}
+
+renderRoleGrid();
+renderRoleDetail();
+renderFlow();
+renderPhaseDetail();
+</script>
+</body>
+</html>
